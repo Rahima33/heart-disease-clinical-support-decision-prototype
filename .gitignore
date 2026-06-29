@@ -1,0 +1,38 @@
+﻿# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache/bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables (contains your GROQ_API_KEY — never commit this)
+.env
+.env.*
+!.env.example
+
+# Jupyter/notebook checkpoints (if any get created)
+.ipynb_checkpoints/
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# Logs
+*.log
+# Frontend dependencies/build output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Frontend local env/log output
+frontend/.env
+frontend/.env.*
+frontend/*.log
