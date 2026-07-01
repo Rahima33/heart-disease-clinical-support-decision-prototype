@@ -1,5 +1,6 @@
-import { Activity, AlertTriangle, CheckCircle2, HeartPulse, Loader2, RotateCcw, Send, TrendingDown, TrendingUp } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, BarChart3, CheckCircle2, HeartPulse, Loader2, RotateCcw, Send, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import heroImage from './assets/cardiorisk-hero.png';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -72,6 +73,7 @@ const examples = [
   },
 ];
 
+
 function toPayload(form) {
   return {
     ...form,
@@ -92,6 +94,64 @@ function riskLabel(probability) {
   if (probability >= 0.7) return 'High model signal';
   if (probability >= 0.4) return 'Moderate model signal';
   return 'Lower model signal';
+}
+
+function LandingPage({ onStart }) {
+  return (
+    <main className="app-shell landing-shell">
+      <section className="landing-hero" style={{ '--hero-image': `url(${heroImage})` }}>
+        <nav className="landing-nav" aria-label="CardioRisk">
+          <div className="brand-mark">
+            <HeartPulse size={21} aria-hidden="true" />
+            <span>CardioRisk</span>
+          </div>
+          <div className="api-status landing-status">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>Prediction Engine Ready</span>
+          </div>
+        </nav>
+
+        <div className="landing-content">
+          <div className="landing-copy">
+            <p className="eyebrow">Explainable AI for Cardiology</p>
+            <h1>Heart disease risk assessment with explainable AI.</h1>
+            <p className="landing-summary">
+              Estimate heart disease risk using a machine learning model trained on the UCI Heart Disease dataset. Explore explainable AI insights through SHAP feature importance and receive an AI-generated clinical summary for each assessment.
+            </p>
+            <div className="landing-actions">
+              <button className="hero-button" type="button" onClick={onStart}>
+                Start Assessment
+                <ArrowRight size={19} aria-hidden="true" />
+              </button>
+              <div className="confidence-note">
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>Demo model for learning, not diagnosis</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-visual-panel" aria-hidden="true">
+            <div className="workflow-preview">
+              <div className="workflow-header">
+                <HeartPulse size={34} aria-hidden="true" />
+                <div>
+                  <span>Assessment Workflow</span>
+                  <strong>From clinical inputs to explained output</strong>
+                </div>
+              </div>
+              <div className="workflow-steps">
+                <div><HeartPulse size={18} aria-hidden="true" /><span>Patient Information</span></div>
+                <div><Activity size={18} aria-hidden="true" /><span>ML Risk Prediction</span></div>
+                <div><BarChart3 size={18} aria-hidden="true" /><span>SHAP Explanation</span></div>
+                <div><ShieldCheck size={18} aria-hidden="true" /><span>Clinical Summary</span></div>
+              </div>
+              <div className="workflow-note">Educational demonstration</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 function Field({ field, value, onChange }) {
@@ -156,7 +216,43 @@ function Factor({ factor }) {
   );
 }
 
+function ShapImpactPlot({ factors }) {
+  const maxImpact = Math.max(...factors.map((factor) => Math.abs(factor.shap_impact)), 0.001);
+
+  return (
+    <section className="shap-block">
+      <div className="section-title-row">
+        <h3>SHAP Impact Plot</h3>
+        <BarChart3 size={18} aria-hidden="true" />
+      </div>
+      <div className="shap-axis" aria-hidden="true">
+        <span>Decreases risk</span>
+        <i />
+        <span>Increases risk</span>
+      </div>
+      <ol className="shap-list">
+        {factors.map((factor) => {
+          const value = factor.shap_impact;
+          const increased = value > 0;
+          const width = `${Math.max(8, (Math.abs(value) / maxImpact) * 50)}%`;
+
+          return (
+            <li className="shap-row" key={`plot-${factor.feature}-${value}`}>
+              <span>{factor.display_feature}</span>
+              <div className="shap-track">
+                <i className={increased ? 'positive' : 'negative'} style={{ width }} />
+              </div>
+              <code>{value > 0 ? '+' : ''}{value.toFixed(3)}</code>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 function App() {
+  const [step, setStep] = useState('landing');
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
   const [status, setStatus] = useState('idle');
@@ -202,17 +298,26 @@ function App() {
     setStatus('idle');
   }
 
+  if (step === 'landing') {
+    return <LandingPage onStart={() => setStep('assessment')} />;
+  }
+
   return (
-    <main className="app-shell">
+    <main className="app-shell assessment-shell">
       <section className="workspace">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Clinical model console</p>
+            <p className="eyebrow">Clinical Decision Support</p>
             <h1>CardioRisk</h1>
           </div>
-          <div className="api-status">
-            <CheckCircle2 size={18} aria-hidden="true" />
-            <span>FastAPI: 127.0.0.1:8000</span>
+          <div className="topbar-actions">
+            <button className="ghost-button" type="button" onClick={() => setStep('landing')}>
+              Overview
+            </button>
+            <div className="api-status">
+              <CheckCircle2 size={18} aria-hidden="true" />
+              <span>Prediction Engine Ready</span>
+            </div>
           </div>
         </header>
 
@@ -221,7 +326,7 @@ function App() {
             <div className="panel-heading">
               <div>
                 <h2>Prediction Inputs</h2>
-                <p>Values are sent directly to the `/predict` endpoint.</p>
+                <p>Complete the patient profile to generate an explained model output.</p>
               </div>
               <HeartPulse size={24} aria-hidden="true" />
             </div>
@@ -285,6 +390,8 @@ function App() {
                   <h3>Summary</h3>
                   <p>{result.summary}</p>
                 </section>
+
+                <ShapImpactPlot factors={result.top_factors} />
 
                 <section className="factor-block">
                   <h3>Top Factors</h3>
